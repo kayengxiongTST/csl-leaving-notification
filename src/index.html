@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Computer Science Lab</title>
+		<link href="../dist/output.css" rel="stylesheet" />
+	</head>
+	<body class="bg-slate-50">
+		<div class="px-5 py-5 mx-auto">
+			<div class="grid grid-cols-2 mt-5">
+				<div class="col-span-1">
+					<div class="text-black font-semibold">Start Time</div>
+					<div id="startTime" class="py-1">00:00:00</div>
+				</div>
+				<div class="col-span-1">
+					<div class="text-black font-semibold">Leaving Time</div>
+					<div id="endTime" class="py-1">00:00:00</div>
+				</div>
+			</div>
+			<input id="customTime" type="text" placeholder="Custom Time, HH:MM" class="py-1 px-3 outline-none" onkeyup="onKeyUp()" maxlength="5" />
+			<button class="mt-5 bg-indigo-700 hover:bg-indigo-900 text-slate-50 px-8 py-1 rounded-lg font-semibold" clearable onclick="startTime()">Start</button>
+			<button id="new-notification" class="mt-5 text-slate-200">Test Notification</button>
+		</div>
+		<script src="../electron.js"></script>
+		<script>
+			const endTime = document.getElementById('endTime')
+			// initialization
+
+			if (localStorage.getItem('startTime')) {
+				replaceText(localStorage.getItem('startTime'))
+			} else {
+				replaceText()
+			}
+
+			const customTime = document.getElementById('customTime')
+
+			customTime.addEventListener('keydown', function (event) {
+				const value = event.target.value
+				// backspace
+				if (event.keyCode === 8 && value.length === 3 && value.endsWith(':')) {
+					customTime.value = value.charAt(1)
+				}
+				// event.preventDefault()
+			})
+			function onKeyUp() {
+				const value = customTime.value
+				if (value.length == 2) {
+					customTime.value = `${value}:`
+				}
+			}
+
+			function getCurrentTime() {
+				const now = new Date()
+
+				// Get the hours, minutes, and seconds
+				const hours = now.getHours().toString().padStart(2, '0')
+				const minutes = now.getMinutes().toString().padStart(2, '0')
+				const seconds = now.getSeconds().toString().padStart(2, '0')
+
+				// Create the time string
+				const timeString = `${hours}:${minutes}:${seconds}`
+
+				return timeString
+			}
+			function replaceEndTime(text) {
+				endTime.innerText = text
+				triggerActionAtTime(text)
+			}
+			function triggerActionAtTime(targetTime) {
+				const currentTime = new Date()
+				const targetDateTime = new Date()
+				const [hours, minutes, seconds] = targetTime.split(':')
+
+				targetDateTime.setHours(hours)
+				targetDateTime.setMinutes(minutes)
+				targetDateTime.setSeconds(seconds)
+
+				const timeRemaining = targetDateTime.getTime() - currentTime.getTime()
+
+				setTimeout(function () {
+					sendNotification(targetTime)
+					// Perform your action here
+				}, timeRemaining)
+			}
+			function replaceText(text = null) {
+				const startTime = document.getElementById('startTime')
+				let time = null
+				if (text) time = text
+				else time = getCurrentTime()
+
+				startTime.innerText = time
+
+				// replace local storage
+				localStorage.setItem('startTime', time)
+				triggerActionAtTime('12:39:00')
+
+				if (!ifItInRange(time)) {
+					replaceEndTime('17:30:00')
+				} else {
+					const minute = time.split(':')
+
+					replaceEndTime(getNext9Hours(minute[1]))
+				}
+			}
+			function startTime() {
+				if (window.confirm('Are you sure to restart start time from now?')) {
+					if (customTime.value.length == 5) {
+						replaceText(`${customTime.value}:00`)
+						return
+					}
+					replaceText(false)
+				}
+			}
+			function ifItInRange(time) {
+				if (!time) return false
+				const startTime = '08:00:00'
+				const endTime = '08:30:00'
+
+				// Convert the time strings to Date objects
+				const aTime = new Date(`2000-01-01T${time}`)
+				const startTimeObj = new Date(`2000-01-01T${startTime}`)
+				const endTimeObj = new Date(`2000-01-01T${endTime}`)
+
+				// Check if aTime is within the range
+				if (aTime >= startTimeObj && aTime <= endTimeObj) {
+					return true
+				}
+				return false
+			}
+			function getNext9Hours(time) {
+				const startTime = '08:00:00'
+				const endTime = '17:00:00'
+
+				// Convert the time strings to Date objects
+				const timeObj = new Date(`2000-01-01T08:${time}:00`)
+				const startTimeObj = new Date(`2000-01-01T${startTime}`)
+				const endTimeObj = new Date(`2000-01-01T${endTime}`)
+
+				// Check if the time falls within the specified range
+				if (timeObj >= startTimeObj && timeObj <= endTimeObj) {
+					// Add 9 hours to the input time
+					timeObj.setHours(timeObj.getHours() + 9)
+					return timeObj.toLocaleTimeString('en-US', { hour12: false })
+				} else {
+					return time
+				}
+			}
+		</script>
+	</body>
+</html>
