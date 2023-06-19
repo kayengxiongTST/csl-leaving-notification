@@ -18,6 +18,10 @@
 					<div class="text-black font-semibold">Leaving Time</div>
 					<div id="endTime" class="py-1">00:00:00</div>
 				</div>
+				<div class="col-span-1">
+					<div class="text-black font-semibold">Reminding Time</div>
+					<div id="remainTime" class="py-1">00:00:00</div>
+				</div>
 			</div>
 			<input id="customTime" type="text" placeholder="Custom Time, HH:MM" class="py-1 px-3 outline-none" onkeyup="onKeyUp()" maxlength="5" />
 			<button class="mt-5 bg-indigo-700 hover:bg-indigo-900 text-slate-50 px-8 py-1 rounded-lg font-semibold" clearable onclick="startTime()">Start</button>
@@ -71,9 +75,48 @@
 
 				return timeString
 			}
+			function calculateMinutesLeft(targetTime) {
+				const currentTime = new Date()
+				const target = new Date(targetTime)
+
+				// Calculate the difference in milliseconds
+				const differenceMs = target - currentTime
+
+				// Convert milliseconds to minutes
+				const minutesLeft = Math.floor(differenceMs / 1000)
+
+				return minutesLeft
+			}
+			function convertMinutesToMilliseconds(minutes) {
+				const milliseconds = minutes * 60 * 1000
+				return milliseconds
+			}
+			function convertSecondsToHHMMSS(seconds) {
+				const hours = Math.floor(seconds / 3600)
+				const minutes = Math.floor((seconds % 3600) / 60)
+				const remainingSeconds = seconds % 60
+
+				const formattedTime = `${padZero(hours)}:${padZero(minutes)}:${padZero(remainingSeconds)}`
+				return formattedTime
+			}
+
+			function padZero(num) {
+				return String(num).padStart(2, '0')
+			}
 			function replaceEndTime(text) {
 				endTime.innerText = text
-				triggerActionAtTime(text)
+				const remainTime = document.getElementById('remainTime')
+
+				const setTime = setInterval(() => {
+					const leftTime = calculateMinutesLeft(`${getTodayDate()} ${text}`)
+					remainTime.innerHTML = convertSecondsToHHMMSS(leftTime)
+				}, 1000)
+
+				const setTimeouts = setTimeout(() => {
+					sendNotification()
+					clearInterval(setTime)
+					clearTimeout(setTimeouts)
+				}, convertMinutesToMilliseconds(leftTime))
 			}
 			function triggerActionAtTime(targetTime) {
 				const currentTime = new Date()
@@ -85,11 +128,9 @@
 				targetDateTime.setSeconds(seconds)
 
 				const timeRemaining = targetDateTime.getTime() - currentTime.getTime()
-
-				setTimeout(function () {
-					sendNotification(targetTime)
-					// Perform your action here
-				}, timeRemaining)
+				// setTimeout(function () {
+				// 	// sendNotification(targetTime)
+				// }, timeRemaining)
 			}
 
 			function getTodayDate() {
@@ -123,7 +164,6 @@
 
 				// replace local storage
 				localStorage.setItem('startTime', time)
-				triggerActionAtTime('12:39:00')
 
 				if (!ifItInRange(time)) {
 					if (todayIsSunday()) {
