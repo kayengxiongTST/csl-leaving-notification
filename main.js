@@ -9,7 +9,7 @@ function createWindow() {
 		webPreferences: {
 			preload: path.join(__dirname, 'preload.js')
 		},
-		resizable: false
+		resizable: false,
 	})
 
 	win.loadFile('src/index.html')

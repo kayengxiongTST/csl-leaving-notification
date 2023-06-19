@@ -28,9 +28,16 @@
 			const endTime = document.getElementById('endTime')
 			// initialization
 
-			if (localStorage.getItem('startTime')) {
-				replaceText(localStorage.getItem('startTime'))
+			if (localStorage.getItem('todayDate')) {
+				if (localStorage.getItem('todayDate') != getTodayDate()) {
+					localStorage.setItem('todayDate', getTodayDate())
+					localStorage.removeItem('startTime')
+					replaceText()
+				} else {
+					replaceText(localStorage.getItem('startTime'))
+				}
 			} else {
+				setTodayDate()
 				replaceText()
 			}
 
@@ -84,6 +91,28 @@
 					// Perform your action here
 				}, timeRemaining)
 			}
+
+			function getTodayDate() {
+				const currentDate = new Date()
+				const year = currentDate.getFullYear()
+				const month = (currentDate.getMonth() + 1).toString().padStart(2, '0')
+				const day = currentDate.getDate().toString().padStart(2, '0')
+				const todayDate = year + '-' + month + '-' + day
+
+				return todayDate
+			}
+			function setTodayDate() {
+				const todayDate = getTodayDate()
+				// Store the date in localStorage
+				localStorage.setItem('todayDate', todayDate)
+			}
+
+			function todayIsSunday() {
+				const currentDate = new Date()
+				const dayOfWeek = currentDate.getDay()
+				return dayOfWeek === 6
+			}
+
 			function replaceText(text = null) {
 				const startTime = document.getElementById('startTime')
 				let time = null
@@ -97,11 +126,18 @@
 				triggerActionAtTime('12:39:00')
 
 				if (!ifItInRange(time)) {
-					replaceEndTime('17:30:00')
+					if (todayIsSunday()) {
+						replaceEndTime('12:30:00')
+					} else {
+						replaceEndTime('17:30:00')
+					}
 				} else {
 					const minute = time.split(':')
-
-					replaceEndTime(getNext9Hours(minute[1]))
+					if (todayIsSunday()) {
+						replaceEndTime(getNext9Hours(minute[1], 4))
+					} else {
+						replaceEndTime(getNext9Hours(minute[1]))
+					}
 				}
 			}
 			function startTime() {
@@ -129,7 +165,7 @@
 				}
 				return false
 			}
-			function getNext9Hours(time) {
+			function getNext9Hours(time, defaultWorkHours = 9) {
 				const startTime = '08:00:00'
 				const endTime = '17:00:00'
 
@@ -141,7 +177,7 @@
 				// Check if the time falls within the specified range
 				if (timeObj >= startTimeObj && timeObj <= endTimeObj) {
 					// Add 9 hours to the input time
-					timeObj.setHours(timeObj.getHours() + 9)
+					timeObj.setHours(timeObj.getHours() + defaultWorkHours)
 					return timeObj.toLocaleTimeString('en-US', { hour12: false })
 				} else {
 					return time

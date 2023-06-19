@@ -3,12 +3,17 @@
 // All of the Node.js APIs are available in this process.
 
 function sendNotification() {
-	let myNotification = new Notification("Computer Science Lab", {
-		body: "It's time for you to go back home"
-	})
+	try {
+		let myNotification = new Notification("Computer Science Lab", {
+			body: "It's time for you to go back home"
+		})
 
-	myNotification.onclick = () => {
-		console.log("Notification clicked")
+		myNotification.onclick = () => {
+			console.log("Notification clicked")
+		}
+
+	} catch (error) {
+		console.log(error)
 	}
 }
 window.addEventListener("load", function () {
