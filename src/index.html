@@ -30,6 +30,7 @@
 		<script src="../electron.js"></script>
 		<script>
 			const endTime = document.getElementById('endTime')
+			let setTime = null
 			// initialization
 
 			if (localStorage.getItem('todayDate')) {
@@ -107,16 +108,15 @@
 				endTime.innerText = text
 				const remainTime = document.getElementById('remainTime')
 
-				const setTime = setInterval(() => {
+				setTime = setInterval(() => {
 					const leftTime = calculateMinutesLeft(`${getTodayDate()} ${text}`)
-					remainTime.innerHTML = convertSecondsToHHMMSS(leftTime)
+					if (leftTime < 0) {
+						clearInterval(setTime)
+						sendNotification()
+					} else {
+						remainTime.innerHTML = convertSecondsToHHMMSS(leftTime)
+					}
 				}, 1000)
-
-				const setTimeouts = setTimeout(() => {
-					sendNotification()
-					clearInterval(setTime)
-					clearTimeout(setTimeouts)
-				}, convertMinutesToMilliseconds(leftTime))
 			}
 			function triggerActionAtTime(targetTime) {
 				const currentTime = new Date()
